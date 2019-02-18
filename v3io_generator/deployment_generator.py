@@ -1,14 +1,15 @@
-from faker import Faker
-from v3io_generator.providers.location_provider import LocationProvider
-
 import itertools
 import pandas as pd
 
-class deployment_generator:
 
+class deployment_generator:
     def __init__(self):
-        self.f = Faker('en_US')
-        self.f.add_provider(LocationProvider)
+        import faker
+
+        self.f = faker.Faker('en_US')
+
+        from .deployment import providers
+        self.f.add_provider(providers.LocationProvider)
 
         self.temp_configuration = list()
         self.temp_location_configuration = dict()
@@ -55,15 +56,6 @@ class deployment_generator:
 
     def add_level(self, name: str, number: int, level_type):
         self.temp_configuration.append((name, number, level_type))
-        # self.temp_configuration.append((self._add_config_name(name), self._add_config_number(number), self._add_config_type(level_type)))
-
-    def _add_config_type(self, level_type: str):
-        available_faker_types = {
-            'company': self.f.company,
-            'person': self.f.person,
-            'country': self.f.country,
-        }
-        return 0
 
     def _add_config_name(self, name: str):
         return 0
@@ -84,15 +76,13 @@ class deployment_generator:
             current_level = left.pop(0)
             current_generator = current_level[2]
             num_possibilities_to_generate = current_level[1]
-            to_append = [current_generator() for elem in range(num_possibilities_to_generate)]
+            to_append = [current_generator().replace(',', '_').replace(' ', '_') for elem in range(num_possibilities_to_generate)]
             generated = [[*current, elem] for elem in to_append]
             return generated
         else:
             current_level = left.pop(0)
             current_generator = current_level[2]
             num_possibilities_to_generate = current_level[1]
-            to_append = [current_generator() for elem in range(num_possibilities_to_generate)]
+            to_append = [current_generator().replace(',', '_').replace(' ', '_') for elem in range(num_possibilities_to_generate)]
             generated = [self._add_column_to_sample([*current, elem], left.copy()) for elem in to_append]
             return list(itertools.chain.from_iterable(generated))
-
-
