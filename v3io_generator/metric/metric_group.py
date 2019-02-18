@@ -5,8 +5,7 @@ from v3io_generator.metric.metric import Metric
 class Metric_Group:
 
     def __init__(self, metrics: dict, initial_values: dict = {},
-                 start_time: int = 0, interval: int = 0,
-                 stocastic_interval: bool = False, error_rate_ticks: int = 0,
+                 error_rate_ticks: int = 0,
                  error_length_ticks: int = 0):
         '''
             Component Manager:

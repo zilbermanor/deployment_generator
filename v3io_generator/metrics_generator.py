@@ -3,6 +3,7 @@ from v3io_generator.metric.metric_group import Metric_Group
 import hashlib
 import datetime
 from pytimeparse import parse
+import json
 
 
 class Generator_df:
@@ -16,11 +17,12 @@ class Generator_df:
         errors = configuration['errors']
 
         self.dimension_hashes = []
-        self.dimensions = self.define_uh(user_hierarchy)
+        self.initial_values = {}
+        self.dimensions = self.define_uh(df_labels=user_hierarchy[list(list(user_hierarchy.columns) - metrics.keys())],
+                                         df_metrics=user_hierarchy[metrics.keys()])
 
-        # TODO add initial values to each metric and line
 
-        self.metric_groups = {dimension_hash: Metric_Group(metrics=metrics, initial_values={},
+        self.metric_groups = {dimension_hash: Metric_Group(metrics=metrics, initial_values=self.initial_values[dimension_hash],
                                                            error_length_ticks=errors.setdefault('length_in_ticks', 0),
                                                            error_rate_ticks=errors.setdefault('rate_in_ticks', 0)) for dimension_hash in
                               self.dimension_hashes}
@@ -44,15 +46,16 @@ class Generator_df:
         else:
             return user_interval
 
-    def define_uh(self, df: pd.DataFrame):
+    def define_uh(self, df_labels: pd.DataFrame, df_metrics: pd.DataFrame):
         labels = []
-        for _, cols in df.iterrows():
+        for idx, cols in df_labels.iterrows():
             current_label = cols.to_dict().items()
-            labels.append(list(current_label))
+            labels.append((list(current_label), json.loads(df_metrics.iloc[idx].to_json(orient='index'))))
         for label in labels:
-            row_labels_hash = hashlib.sha256(str(label).encode()).hexdigest()
+            row_labels_hash = hashlib.sha256(str(label[0]).encode()).hexdigest()
             self.dimension_hashes.append(row_labels_hash)
-        return labels
+            self.initial_values[row_labels_hash] = label[1]
+        return list(map(lambda l: l[0], labels))
 
     def get_dataframe_hash(self, df: pd.DataFrame):
         return hashlib.sha256(df.to_json().encode()).hexdigest()

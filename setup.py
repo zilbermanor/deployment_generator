@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="v3io_generator",
-    version="0.0.18dev",
+    version="0.0.19dev",
     author="Or Zilberman",
     author_email="zilbermanor@gmail.com",
     description="Fake deployment and data generator",
