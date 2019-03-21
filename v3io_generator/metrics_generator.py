@@ -4,6 +4,7 @@ import hashlib
 import datetime
 from pytimeparse import parse
 import json
+import itertools
 
 
 class Generator_df:
@@ -109,7 +110,10 @@ class Generator_df:
                 res = self.build_dict_from_tuples_array(res)
             yield res
 
-    def generate_range(self, start_time=datetime.datetime.now(), end_time=datetime.datetime.now()+datetime.timedelta(seconds=1), as_df: bool = True):
+    def _range_iterator_crator(self,
+                               start_time=datetime.datetime.now(),
+                               end_time=datetime.datetime.now() + datetime.timedelta(seconds=1),
+                               as_df: bool = True):
         self.global_timestamp = start_time
         gen = self.generate(as_df)
         if end_time >= self.global_timestamp:
@@ -118,3 +122,23 @@ class Generator_df:
         else:
             while True:
                 yield pd.DataFrame()
+
+    def generate_range(self,
+                       start_time=datetime.datetime.now(),
+                       end_time=datetime.datetime.now()+datetime.timedelta(seconds=1),
+                       as_df: bool = True,
+                       as_iterator = True):
+        self.global_timestamp = start_time
+        if as_df and not as_iterator:
+            metrics = self._range_iterator_crator(start_time, end_time, False)
+        else:
+            metrics = self._range_iterator_crator(start_time, end_time, as_df)
+
+        if as_iterator:
+            return metrics
+        else:
+            exhausted_metrics = list(map(lambda x: dict(x), itertools.chain(*metrics)))
+            if as_df:
+                return pd.DataFrame.from_dict(exhausted_metrics)
+            else:
+                return exhausted_metrics
